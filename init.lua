@@ -46,6 +46,7 @@ lazy.path = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
 lazy.opts = {}
 
 lazy.setup({
+	{'rebelot/kanagawa.nvim'},
 	{'nvim-lualine/lualine.nvim'},
 	{'nvim-lua/plenary.nvim'},
   {'nvim-treesitter/nvim-treesitter'},
@@ -61,6 +62,7 @@ lazy.setup({
 })
 
 vim.opt.termguicolors = true
+vim.cmd("colorscheme kanagawa")
 
 require('lualine').setup({
 	options = {
