@@ -1,7 +1,6 @@
 vim.opt.number = true
 vim.opt.ignorecase = true
 vim.opt.smartcase = true
-vim.opt.hlsearch = false
 vim.opt.wrap = true
 vim.opt.breakindent = true
 vim.opt.tabstop = 2
@@ -71,6 +70,12 @@ lazy.setup({
 })
 
 vim.opt.termguicolors = true
+require('kanagawa').setup({
+	keywordStyle = { italic = false },
+	background = {
+		dark = 'dragon'
+	}
+})
 vim.cmd("colorscheme kanagawa")
 
 require('lualine').setup({
@@ -111,7 +116,8 @@ require('nvim-treesitter.configs').setup({
 		'ruby',
 		'elixir',
 		'c',
-		'lua'
+		'lua',
+		'vimdoc'
 	},
 })
 
@@ -132,10 +138,25 @@ require("mason-lspconfig").setup()
 
 local lspconfig = require('lspconfig')
 local lsp_capabilities = require('cmp_nvim_lsp').default_capabilities()
+local util = require 'lspconfig.util'
 
 lspconfig.lua_ls.setup({
 	capabilities = lsp_capabilities,
 })
+
+lspconfig.ruby_ls.setup({
+	cmd = { 'ruby-lsp' },
+	filetypes = { 'ruby' },
+	root_dir = util.root_pattern('Gemfile', '.git'),
+	init_options = {
+		formatter = 'auto',
+	},
+	single_file_support = true,
+})
+lspconfig.elixirls.setup({
+	cmd = { '/Users/mateus/.local/share/nvim/mason/packages/elixir-ls/language_server.sh' }
+})
+lspconfig.clangd.setup({})
 
 require('luasnip.loaders.from_vscode').lazy_load()
 
@@ -173,6 +194,77 @@ cmp.setup({
 		end,
 	},
 	mapping = {
+		['<Up>'] = cmp.mapping.select_prev_item(select_opts),
+		['<Down>'] = cmp.mapping.select_next_item(select_opts),
+		['<C-u>'] = cmp.mapping.scroll_docs(-4),
+		['<C-d>'] = cmp.mapping.scroll_docs(4),
+		['<C-e>'] = cmp.mapping.abort(),
+		['<C-y>'] = cmp.mapping.confirm({select = true}),
 		['<CR>'] = cmp.mapping.confirm({select = false}),
-	}
+		['<C-f>'] = cmp.mapping(function(fallback)
+			if luasnip.jumpable(1) then
+				luasnip.jump(1)
+			else
+				fallback()
+			end
+		end, {'i', 's'}),
+		['<C-b>'] = cmp.mapping(function(fallback)
+			if luasnip.jumpable(-1) then
+				luasnip.jump(-1)
+			else
+				fallback()
+			end
+		end, {'i', 's'}),
+		['<Tab>'] = cmp.mapping(function(fallback)
+			local col = vim.fn.col('.') - 1
+
+			if cmp.visible() then
+				cmp.select_next_item(select_opts)
+			elseif col == 0 or vim.fn.getline('.'):sub(col, col):match('%s') then
+				fallback()
+			else
+				cmp.complete()
+			end
+		end, {'i', 's'}),
+		['<S-Tab>'] = cmp.mapping(function(fallback)
+			if cmp.visible() then
+				cmp.select_prev_item(select_opts)
+			else
+				fallback()
+			end
+		end, {'i', 's'}),
+	},
 })
+
+local sign = function(opts)
+  vim.fn.sign_define(opts.name, {
+    texthl = opts.name,
+    text = opts.text,
+    numhl = ''
+  })
+end
+
+sign({name = 'DiagnosticSignError', text = '✘'})
+sign({name = 'DiagnosticSignWarn', text = '▲'})
+sign({name = 'DiagnosticSignHint', text = '⚑'})
+sign({name = 'DiagnosticSignInfo', text = '»'})
+
+vim.diagnostic.config({
+  virtual_text = true,
+  signs = true,
+  update_in_insert = false,
+  underline = true,
+  severity_sort = false,
+  float = true,
+})
+
+vim.lsp.handlers['textDocument/hover'] = vim.lsp.with(
+  vim.lsp.handlers.hover,
+  {border = 'rounded'}
+)
+
+vim.lsp.handlers['textDocument/signatureHelp'] = vim.lsp.with(
+  vim.lsp.handlers.signature_help,
+  {border = 'rounded'}
+)
+
