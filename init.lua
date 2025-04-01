@@ -83,11 +83,40 @@ lazy.setup({
       vim.g.loaded_netrw = 1
       vim.g.loaded_netrwPlugin = 1
       
+      -- Custom function to attach keymaps
+      local function on_attach(bufnr)
+        local api = require("nvim-tree.api")
+        
+        local function opts(desc)
+          return { desc = 'nvim-tree: ' .. desc, buffer = bufnr, noremap = true, silent = true, nowait = true }
+        end
+        
+        -- Default mappings
+        api.config.mappings.default_on_attach(bufnr)
+        
+        -- Custom mappings
+        vim.keymap.set('n', '<C-t>', api.tree.change_root_to_parent, opts('Up'))
+        vim.keymap.set('n', '?', api.tree.toggle_help, opts('Help'))
+        vim.keymap.set('n', 'a', api.fs.create, opts('Create'))
+        vim.keymap.set('n', 'd', api.fs.remove, opts('Delete'))
+        vim.keymap.set('n', 'r', api.fs.rename, opts('Rename'))
+        vim.keymap.set('n', 'R', api.tree.reload, opts('Refresh'))
+        vim.keymap.set('n', 'x', api.fs.cut, opts('Cut'))
+        vim.keymap.set('n', 'c', api.fs.copy.node, opts('Copy'))
+        vim.keymap.set('n', 'p', api.fs.paste, opts('Paste'))
+      end
+      
       require("nvim-tree").setup({
+        on_attach = on_attach,
         view = {
           width = 30,
+          adaptive_size = true,  -- Automatically resize based on filename length
         },
         renderer = {
+          group_empty = true,    -- Group empty folders to reduce clutter
+          indent_markers = {
+            enable = true,       -- Show indent markers when folders are open
+          },
           icons = {
             show = {
               file = true,
@@ -95,24 +124,108 @@ lazy.setup({
               folder_arrow = true,
               git = true,
             },
+            git_placement = "before",
           },
         },
         actions = {
           open_file = {
-            quit_on_open = false, -- whether to close the tree when a file is opened
-            resize_window = true, -- resize the tree when opening a file
+            quit_on_open = true,  -- Close tree when opening a file (prevents the issue)
+            window_picker = {
+              enable = true,      -- Intelligently pick which window to open in
+            },
           },
         },
         filters = {
-          dotfiles = false, -- show dotfiles
+          dotfiles = false,      -- Show dotfiles
         },
         git = {
-          ignore = false, -- don't hide gitignored files
+          ignore = false,        -- Don't hide gitignored files
+          timeout = 500,         -- Improve git status refresh speed
+        },
+        filesystem_watchers = {
+          enable = true,         -- Auto-refresh when files change
+        },
+        diagnostics = {
+          enable = true,         -- Show diagnostics in the tree
+          show_on_dirs = true,   -- Show diagnostics on directories
+          icons = {
+            hint = "⚑",
+            info = "»",
+            warning = "▲",
+            error = "✘",
+          },
         },
       })
       
       -- Replace the <leader>e keymap to use nvim-tree
       vim.keymap.set('n', '<leader>e', '<cmd>NvimTreeToggle<cr>', {desc = 'Toggle NvimTree'})
+    end,
+  },
+  
+  -- Add bufferline for better buffer management
+  {
+    'akinsho/bufferline.nvim',
+    version = "*",
+    dependencies = 'nvim-tree/nvim-web-devicons',
+    config = function()
+      require("bufferline").setup({
+        options = {
+          mode = "buffers",
+          separator_style = "slant",
+          always_show_bufferline = false,
+          show_buffer_close_icons = true,
+          show_close_icon = false,
+          color_icons = true,
+          diagnostics = "nvim_lsp",
+          offsets = {
+            {
+              filetype = "NvimTree",
+              text = "File Explorer",
+              highlight = "Directory",
+              separator = true
+            }
+          },
+        }
+      })
+      
+      -- Keymaps for bufferline
+      vim.keymap.set('n', '<leader>1', '<cmd>BufferLineGoToBuffer 1<cr>', {desc = 'Go to buffer 1'})
+      vim.keymap.set('n', '<leader>2', '<cmd>BufferLineGoToBuffer 2<cr>', {desc = 'Go to buffer 2'})
+      vim.keymap.set('n', '<leader>3', '<cmd>BufferLineGoToBuffer 3<cr>', {desc = 'Go to buffer 3'})
+      vim.keymap.set('n', '<leader>4', '<cmd>BufferLineGoToBuffer 4<cr>', {desc = 'Go to buffer 4'})
+      vim.keymap.set('n', '<leader>5', '<cmd>BufferLineGoToBuffer 5<cr>', {desc = 'Go to buffer 5'})
+      vim.keymap.set('n', '<leader>bp', '<cmd>BufferLinePick<cr>', {desc = 'Pick buffer'})
+      vim.keymap.set('n', '<leader>bc', '<cmd>BufferLinePickClose<cr>', {desc = 'Pick buffer to close'})
+    end,
+  },
+  
+  -- Add oil.nvim as an alternative file browser
+  {
+    'stevearc/oil.nvim',
+    dependencies = { "nvim-tree/nvim-web-devicons" },
+    config = function()
+      require('oil').setup({
+        default_file_explorer = false,
+        keymaps = {
+          ["g?"] = "actions.show_help",
+          ["<CR>"] = "actions.select",
+          ["<C-v>"] = "actions.select_vsplit",
+          ["<C-s>"] = "actions.select_split",
+          ["<C-t>"] = "actions.select_tab",
+          ["<C-p>"] = "actions.preview",
+          ["<C-c>"] = "actions.close",
+          ["<C-r>"] = "actions.refresh",
+          ["-"] = "actions.parent",
+          ["_"] = "actions.open_cwd",
+          ["`"] = "actions.cd",
+          ["~"] = "actions.tcd",
+          ["g."] = "actions.toggle_hidden",
+        },
+        use_default_keymaps = true,
+      })
+      
+      -- Add a keymap for oil.nvim
+      vim.keymap.set('n', '<leader>o', '<cmd>Oil<cr>', {desc = 'Open Oil file browser'})
     end,
   },
 })
