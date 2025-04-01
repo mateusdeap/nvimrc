@@ -8,6 +8,8 @@ vim.opt.shiftwidth = 2
 vim.opt.expandtab = false
 vim.opt.relativenumber = true
 vim.opt.completeopt = {'menu', 'menuone', 'noselect'}
+vim.opt.listchars = { space = '·', tab = '->'}
+vim.opt.colorcolumn="100"
 
 require('user.keymaps')
 require('user.autocmds')
@@ -54,7 +56,10 @@ lazy.setup({
 	{'wellle/targets.vim'},
 	{'lukas-reineke/indent-blankline.nvim', main = 'ibl', opts = {}},
 	{'numToStr/Comment.nvim'},
-	{'nvim-telescope/telescope.nvim', tag = '0.1.5'},
+	{
+		'nvim-telescope/telescope.nvim',
+		dependencies = {"nvim-telescope/telescope-live-grep-args.nvim"}
+	},
 	{'lewis6991/gitsigns.nvim'},
 	{'williamboman/mason.nvim'},
 	{'williamboman/mason-lspconfig.nvim'},
@@ -130,8 +135,40 @@ require('gitsigns').setup({
     delete = {text = '➤'},
     topdelete = {text = '➤'},
     changedelete = {text = '▎'},
+  },
+	current_line_blame = true, -- Toggle with `:Gitsigns toggle_current_line_blame`
+  current_line_blame_opts = {
+    virt_text = true,
+    virt_text_pos = 'eol', -- 'eol' | 'overlay' | 'right_align'
+    delay = 1000,
+    ignore_whitespace = false,
+    virt_text_priority = 100,
+  },
+  current_line_blame_formatter = '<author>, <author_time:%Y-%m-%d> - <summary>',
+  current_line_blame_formatter_opts = {
+    relative_time = false,
   }
 })
+
+local telescope = require("telescope")
+-- local telescope_config = require("telescope.config")
+-- local vimgrep_arguments = { unpack(telescope_config.values.vimgrep_arguments) }
+--
+-- table.insert(vimgrep_arguments, "--hidden")
+-- table.insert(vimgrep_arguments, "--glob")
+-- table.insert(vimgrep_arguments, "!**/.git/*")
+--
+-- telescope.setup({
+-- 	defaults = {
+-- 		vimgrep_arguments = vimgrep_arguments,
+-- 	},
+-- 	pickers = {
+-- 		find_files = {
+-- 			find_command = { "rg", "--files", "--hidden", "--glob", "!**/.git/**" },
+-- 		},
+-- 	},
+-- })
+telescope.load_extension("live_grep_args")
 
 require("mason").setup()
 require("mason-lspconfig").setup()
@@ -144,7 +181,7 @@ lspconfig.lua_ls.setup({
 	capabilities = lsp_capabilities,
 })
 
-lspconfig.ruby_ls.setup({
+lspconfig.ruby_lsp.setup({
 	cmd = { 'ruby-lsp' },
 	filetypes = { 'ruby' },
 	root_dir = util.root_pattern('Gemfile', '.git'),
@@ -157,6 +194,7 @@ lspconfig.elixirls.setup({
 	cmd = { '/Users/mateus/.local/share/nvim/mason/packages/elixir-ls/language_server.sh' }
 })
 lspconfig.clangd.setup({})
+lspconfig.yamlls.setup({})
 
 require('luasnip.loaders.from_vscode').lazy_load()
 
