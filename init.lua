@@ -72,6 +72,49 @@ lazy.setup({
 	{'L3MON4D3/LuaSnip'},
 	{'rafamadriz/friendly-snippets'},
 	{'nvim-pack/nvim-spectre'},
+  -- Add nvim-tree plugin
+  {
+    'nvim-tree/nvim-tree.lua',
+    dependencies = {
+      'nvim-tree/nvim-web-devicons', -- optional, for file icons
+    },
+    config = function()
+      -- disable netrw at the very start of your init.lua
+      vim.g.loaded_netrw = 1
+      vim.g.loaded_netrwPlugin = 1
+      
+      require("nvim-tree").setup({
+        view = {
+          width = 30,
+        },
+        renderer = {
+          icons = {
+            show = {
+              file = true,
+              folder = true,
+              folder_arrow = true,
+              git = true,
+            },
+          },
+        },
+        actions = {
+          open_file = {
+            quit_on_open = false, -- whether to close the tree when a file is opened
+            resize_window = true, -- resize the tree when opening a file
+          },
+        },
+        filters = {
+          dotfiles = false, -- show dotfiles
+        },
+        git = {
+          ignore = false, -- don't hide gitignored files
+        },
+      })
+      
+      -- Replace the <leader>e keymap to use nvim-tree
+      vim.keymap.set('n', '<leader>e', '<cmd>NvimTreeToggle<cr>', {desc = 'Toggle NvimTree'})
+    end,
+  },
 })
 
 vim.opt.termguicolors = true
@@ -338,4 +381,3 @@ vim.api.nvim_create_autocmd('LspAttach', {
     end, opts)
   end,
 })
-
